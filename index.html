@@ -14,6 +14,7 @@ svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2;stroke-l
 .top button,.side button{width:44px;height:44px;padding:9px;opacity:.95}
 .top button.on,.side button.on{color:var(--o)}
 .vf{position:relative;flex:1;min-height:0;overflow:hidden;background:#000}
+video::-webkit-media-controls{display:none!important}
 video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .15s}
 .grid{position:absolute;inset:0;pointer-events:none;display:none;background:linear-gradient(#fff4 1px,transparent 1px) 0 33.3%/100% 33.3%,linear-gradient(90deg,#fff4 1px,transparent 1px) 33.3% 0/33.3% 100%}
 .grid.on{display:block}
@@ -69,7 +70,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transiti
   <button id="bMn" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
  </div>
  <div class="vf" id="vf">
-  <video id="v" autoplay playsinline muted></video><div class="port" id="port"></div><div class="grid" id="grid"></div>
+  <video id="v" autoplay playsinline muted poster="data:image/gif;base64,R0lGODlhAQABAAAAACw="></video><div class="port" id="port"></div><div class="grid" id="grid"></div>
   <div class="ev" id="ev"><span>EV</span><input id="evr" type="range" min="-2" max="2" step=".1" value="0"><span id="evv">0.0</span></div>
   <div class="rec" id="rec">00:00</div><div class="cd" id="cd"></div><div class="fl" id="fl"></div>
   <div class="msg" id="msg"></div>
@@ -102,10 +103,12 @@ const $c=(t,p)=>Object.assign(document.createElement(t),p);
 
 async function start(){
  stream&&stream.getTracks().forEach(t=>t.stop());
- try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:S.face,width:{ideal:1920},height:{ideal:1080}},audio:false});
-  v.srcObject=stream;track=stream.getVideoTracks()[0];caps=track.getCapabilities?track.getCapabilities():{};$('msg').style.display='none';
+ try{
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:S.face,width:{ideal:1920},height:{ideal:1080}},audio:false})}
+  catch(e){if(e.name==='NotAllowedError'||e.name==='SecurityError')throw e;stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false})}
+  v.srcObject=stream;await v.play().catch(()=>{});track=stream.getVideoTracks()[0];caps=track.getCapabilities?track.getCapabilities():{};$('msg').style.display='none';
   v.style.transform=S.face==='user'?'scaleX(-1)':'';zoom(S.z);look();
- }catch(e){const m=$('msg');m.style.display='flex';m.textContent=location.protocol==='file:'||(!isSecureContext)?'Camera needs HTTPS. Open this app from your GitHub Pages link.':'Camera access was blocked. Allow camera permission and reload.';}
+ }catch(e){const m=$('msg');m.style.display='flex';m.textContent='Camera error: '+(e.name||e)+'. Open phone Settings > Apps > Camera > Permissions, allow Camera, then reopen the app.';}
 }
 function look(){
  const b=1+S.ev*.18,f=[FILT[S.filter]==='none'?'':FILT[S.filter],S.beauty?'blur(.5px) brightness(1.06) contrast(.95)':'',S.ev?`brightness(${b})`:''].join(' ').trim();
@@ -193,5 +196,5 @@ function show(){const it=S.items[cur];if(!it)return;$('pop').classList.add('on')
  $('pd').href=it.url;$('pd').download=`Camera_${Date.now()}.${it.type==='image'?'jpg':it.ext}`}
 $('th').onclick=()=>{cur=0;show()};$('px').onclick=()=>{$('pop').classList.remove('on');$('pm').innerHTML=''};
 $('pt').onclick=()=>{S.items.splice(cur,1);thumb();S.items.length?(cur=0,show()):$('px').click()};
-setMode('PHOTO');start();
+setMode('PHOTO');zoom(1);start();
 </script></body></html>
