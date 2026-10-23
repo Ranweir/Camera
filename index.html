@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Camera</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#000">
+<style>
+:root{--o:#ef8a3f;--bg:#050003;--w:#fff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;height:100%;background:#000;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+.app{position:relative;margin:auto;height:100dvh;max-width:480px;display:flex;flex-direction:column;background:var(--bg);padding-top:env(safe-area-inset-top)}
+button{background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0}
+button:focus-visible{outline:2px solid var(--o);outline-offset:3px}
+svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.top{display:flex;justify-content:space-around;align-items:center;height:76px;flex:none}
+.top button,.side button{width:44px;height:44px;padding:9px;opacity:.95}
+.top button.on,.side button.on{color:var(--o)}
+.vf{position:relative;flex:1;min-height:0;overflow:hidden;background:#000}
+video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .15s}
+.grid{position:absolute;inset:0;pointer-events:none;display:none;background:linear-gradient(#fff4 1px,transparent 1px) 0 33.3%/100% 33.3%,linear-gradient(90deg,#fff4 1px,transparent 1px) 33.3% 0/33.3% 100%}
+.grid.on{display:block}
+.port{position:absolute;inset:0;pointer-events:none;display:none;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);-webkit-mask:radial-gradient(ellipse 45% 38% at 50% 48%,transparent 60%,#000 100%);mask:radial-gradient(ellipse 45% 38% at 50% 48%,transparent 60%,#000 100%)}
+.port.on{display:block}
+.side{position:absolute;right:14px;bottom:20px;display:flex;flex-direction:column;gap:22px;align-items:center}
+.ring{width:34px;height:34px;border:2.5px solid #fff;border-radius:50%;margin:5px;box-shadow:0 0 6px #fff8}
+.side .ring.on{background:#fff4}
+.bar{position:absolute;left:18px;right:18px;bottom:20px;display:flex;align-items:center;height:56px}
+.tm{display:flex;align-items:center;gap:8px;height:52px;padding:0 20px 0 10px;border-radius:26px;background:#3a3a3a99;font-size:17px;min-width:50px;justify-content:center}
+.tm.on{background:var(--o);color:#1a0d00}
+.tm i{width:32px;height:32px;display:block}
+.zr{display:flex;margin-left:28px;touch-action:none}
+.zr button{width:58px;height:52px;font-size:19px;color:#fff}
+.zr button.a{color:var(--o);font-weight:700}
+.dial{position:absolute;left:0;right:0;bottom:84px;height:84px;display:none;flex-direction:column;align-items:center;pointer-events:none}
+.dial.on{display:flex}
+.dial b{color:var(--o);font-size:22px;margin-bottom:8px;text-shadow:0 1px 4px #000}
+.dial .rl{width:92%;height:46px;border-radius:50% 50% 0 0/100% 100% 0 0;background:#000a;position:relative;overflow:hidden;
+ -webkit-mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent);mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent)}
+.dial .tk{position:absolute;inset:0;background:repeating-linear-gradient(90deg,#fffd 0 2px,transparent 2px 14px);height:24px;top:14px}
+.dial .nd{position:absolute;left:50%;top:6px;width:3px;height:36px;margin-left:-1px;background:var(--o);border-radius:2px}
+.ev{position:absolute;left:30px;right:30px;top:14px;display:none;align-items:center;gap:10px;background:#000a;padding:8px 14px;border-radius:20px}
+.ev.on{display:flex}.ev input{flex:1;accent-color:var(--o)}
+.cd{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:120px;font-weight:200;text-shadow:0 2px 14px #000a;pointer-events:none}
+.fl{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .25s}
+.rec{position:absolute;top:12px;left:0;right:0;text-align:center;display:none;font-variant-numeric:tabular-nums}
+.rec.on{display:block}.rec:before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:#f33;margin-right:8px}
+.modes{flex:none;height:76px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none;padding:0 calc(50% - 60px);gap:6px}
+.modes::-webkit-scrollbar{display:none}
+.modes button{flex:none;padding:10px 24px;border-radius:22px;font-size:22px;letter-spacing:.2px}
+.modes button.a{background:#2b2b2b;color:var(--o);font-weight:700}
+.modes button.a:after{content:"";display:inline-block;margin-left:10px;border:6px solid transparent;border-bottom:8px solid var(--o);border-top:0}
+.bot{flex:none;height:150px;display:flex;align-items:center;justify-content:space-around;padding:0 28px 12px}
+.th{width:78px;height:78px;border-radius:14px;background:#222 center/cover;border:0;overflow:hidden}
+.sh{width:108px;height:108px;border-radius:50%;border:5px solid #fff;padding:6px}
+.sh i{display:block;width:100%;height:100%;border-radius:50%;background:var(--o);transition:.2s}
+.sh:active i{transform:scale(.9)}
+.sh.r i{border-radius:14px;transform:scale(.55);background:#f33}
+.fp{width:78px;height:78px;border-radius:50%;background:#2a2a2a;padding:20px}
+.pop{position:absolute;inset:0;z-index:9;background:#000;display:none;flex-direction:column}
+.pop.on{display:flex}.pop .m{flex:1;min-height:0;display:flex}.pop img,.pop video{margin:auto;max-width:100%;max-height:100%}
+.pop .ac{display:flex;justify-content:space-around;padding:18px;font-size:18px}.pop .ac a{color:var(--o);text-decoration:none}
+.msg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:40px;color:#bbb;font-size:17px;line-height:1.5}
+</style></head><body>
+<div class="app">
+ <div class="top">
+  <button id="bFl" aria-label="Flash"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/><path d="M3 3l18 18"/></svg></button>
+  <button id="bEv" aria-label="Exposure"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.5"/><text x="12" y="16.3" text-anchor="middle" font-size="9.5" font-weight="700" fill="currentColor" stroke="none">EV</text></svg></button>
+  <button id="bLv" aria-label="Live photo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke-dasharray="1.5 2.6"/><circle cx="12" cy="12" r="3.5"/><path d="M4 4l16 16"/></svg></button>
+  <button id="bAi" aria-label="Action shot"><svg viewBox="0 0 24 24"><circle cx="16" cy="5" r="2"/><path d="m11 8 3-1 3 3 3 1M14 7l-2 5 4 3-1 5M12 12l-4 3-3 0M2 8h5M3 11h4M4 14h2"/></svg></button>
+  <button id="bFo" aria-label="Scan"><svg viewBox="0 0 24 24"><path d="M4 9V6a2 2 0 0 1 2-2h3M15 4h3a2 2 0 0 1 2 2v3M20 15v3a2 2 0 0 1-2 2h-3M9 20H6a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg></button>
+  <button id="bMn" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+ </div>
+ <div class="vf" id="vf">
+  <video id="v" autoplay playsinline muted></video><div class="port" id="port"></div><div class="grid" id="grid"></div>
+  <div class="ev" id="ev"><span>EV</span><input id="evr" type="range" min="-2" max="2" step=".1" value="0"><span id="evv">0.0</span></div>
+  <div class="rec" id="rec">00:00</div><div class="cd" id="cd"></div><div class="fl" id="fl"></div>
+  <div class="msg" id="msg"></div>
+  <div class="side">
+   <button id="bHd" aria-label="Quality"><div class="ring"></div></button>
+   <button id="bFi" aria-label="Filters"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><circle cx="8" cy="15" r="5"/><circle cx="16" cy="15" r="5"/></svg></button>
+   <button id="bBt" aria-label="Beauty"><svg viewBox="0 0 24 24"><path d="M5 20v-9a7 7 0 0 1 14 0v3c0 3-2 5-5 5h-2l-2 2z"/><path d="M5 12c4 0 7-2 8-5M19 3v4M17 5h4"/></svg></button>
+  </div>
+  <div class="dial" id="dial"><b id="dv">1×</b><div class="rl"><div class="tk" id="tk"></div><div class="nd"></div></div></div>
+  <div class="bar">
+   <button class="tm on" id="bTm" aria-label="Timer"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></i><span id="tmv">3s</span></button>
+   <div class="zr" id="zr"></div>
+  </div>
+ </div>
+ <div class="modes" id="modes"></div>
+ <div class="bot">
+  <button class="th" id="th" aria-label="Gallery"></button>
+  <button class="sh" id="sh" aria-label="Shutter"><i></i></button>
+  <button class="fp" id="fp" aria-label="Flip camera"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14-4L4 9M4 4v5h5M4 13a8 8 0 0 0 14 4l2-2M20 20v-5h-5"/></svg></button>
+ </div>
+ <div class="pop" id="pop"><div class="m" id="pm"></div><div class="ac"><a id="pd" download>Save</a><button id="px" style="color:#fff">Close</button><button id="pt" style="color:#f66">Delete</button></div></div>
+</div>
+<script>
+const $=id=>document.getElementById(id),v=$('v');
+const S={face:'environment',z:1,flash:false,ev:0,timer:3,mode:'PHOTO',filter:0,beauty:false,items:[],rec:null,busy:false};
+const FILT=['none','grayscale(1)','sepia(.8)','saturate(1.7) contrast(1.1)','contrast(1.2) brightness(1.05) hue-rotate(-12deg)'];
+const MODES=['MASTER','VIDEO','PHOTO','PORTRAIT','MORE'],ZP=[.6,1,2,3,6],TM=[0,3,5,10];
+let stream,track,caps={};
+const $c=(t,p)=>Object.assign(document.createElement(t),p);
+
+async function start(){
+ stream&&stream.getTracks().forEach(t=>t.stop());
+ try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:S.face,width:{ideal:1920},height:{ideal:1080}},audio:false});
+  v.srcObject=stream;track=stream.getVideoTracks()[0];caps=track.getCapabilities?track.getCapabilities():{};$('msg').style.display='none';
+  v.style.transform=S.face==='user'?'scaleX(-1)':'';zoom(S.z);look();
+ }catch(e){const m=$('msg');m.style.display='flex';m.textContent=location.protocol==='file:'||(!isSecureContext)?'Camera needs HTTPS. Open this app from your GitHub Pages link.':'Camera access was blocked. Allow camera permission and reload.';}
+}
+function look(){
+ const b=1+S.ev*.18,f=[FILT[S.filter]==='none'?'':FILT[S.filter],S.beauty?'blur(.5px) brightness(1.06) contrast(.95)':'',S.ev?`brightness(${b})`:''].join(' ').trim();
+ S.css=f||'none';v.style.filter=S.css;
+}
+function zoom(z){
+ const lo=.6,hi=10;S.z=Math.max(lo,Math.min(hi,z));let hw=1;
+ if(caps.zoom){const zz=Math.max(caps.zoom.min,Math.min(caps.zoom.max,S.z));track.applyConstraints({advanced:[{zoom:zz}]}).catch(()=>{});hw=zz/S.z>.99&&zz/S.z<1.01?1:1;S.cs=1;}
+ else S.cs=Math.max(1,S.z);
+ const mir=S.face==='user'?-1:1;v.style.transform=`scaleX(${mir}) scale(${S.cs})`;
+ let near=0;ZP.forEach((p,i)=>{if(Math.abs(Math.log(S.z/p))<Math.abs(Math.log(S.z/ZP[near])))near=i});
+ [...$('zr').children].forEach((b,i)=>{const a=i===near;b.classList.toggle('a',a);b.textContent=a?(Math.abs(S.z-ZP[i])<.05?ZP[i]:S.z.toFixed(1))+'×':ZP[i]});
+ $('dv').textContent=S.z.toFixed(1)+'×';
+}
+ZP.forEach(p=>{const b=$c('button',{onclick:()=>{if(!dragged)zoom(p)}});$('zr').append(b)});
+// wheel-dial zoom: drag horizontally on zoom row
+let dragged=false,x0,z0;const zr=$('zr');
+zr.addEventListener('pointerdown',e=>{x0=e.clientX;z0=S.z;dragged=false;zr.setPointerCapture(e.pointerId)});
+zr.addEventListener('pointermove',e=>{if(x0==null)return;const dx=e.clientX-x0;if(Math.abs(dx)>8)dragged=true;if(dragged){$('dial').classList.add('on');zoom(z0*Math.pow(2,dx/110));$('tk').style.backgroundPositionX=(-Math.log2(S.z)*110)+'px'}});
+const end=()=>{x0=null;$('dial').classList.remove('on');setTimeout(()=>dragged=false,50)};
+zr.addEventListener('pointerup',end);zr.addEventListener('pointercancel',end);
+$('vf').addEventListener('wheel',e=>{e.preventDefault();zoom(S.z*Math.pow(2,-e.deltaY/400))},{passive:false});
+let pd0;const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+$('vf').addEventListener('touchstart',e=>{if(e.touches.length==2){pd0=dist(e.touches);z0=S.z}},{passive:true});
+$('vf').addEventListener('touchmove',e=>{if(e.touches.length==2&&pd0)zoom(z0*dist(e.touches)/pd0)},{passive:true});
+$('vf').addEventListener('touchend',()=>pd0=null);
+
+// modes
+MODES.forEach(m=>{const b=$c('button',{textContent:m,onclick:()=>setMode(m)});b.dataset.m=m;$('modes').append(b)});
+function setMode(m){
+ if(m==='MORE'){$('grid').classList.toggle('on');return}
+ S.mode=m;[...$('modes').children].forEach(b=>b.classList.toggle('a',b.dataset.m===m));
+ $('port').classList.toggle('on',m==='PORTRAIT');
+ if(m==='MASTER')$('grid').classList.add('on');
+ $('modes').querySelector('.a').scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
+}
+// top controls
+$('bFl').onclick=e=>{S.flash=!S.flash;e.currentTarget.classList.toggle('on',S.flash);e.currentTarget.querySelector('path:last-child').style.display=S.flash?'none':''};
+$('bEv').onclick=e=>{$('ev').classList.toggle('on');e.currentTarget.classList.toggle('on')};
+$('evr').oninput=e=>{S.ev=+e.target.value;$('evv').textContent=S.ev.toFixed(1);if(caps.exposureCompensation)track.applyConstraints({advanced:[{exposureCompensation:S.ev}]}).catch(()=>{});look()};
+['bLv','bAi','bFo','bHd'].forEach(id=>$(id).onclick=e=>e.currentTarget.classList.toggle('on'));
+$('bMn').onclick=()=>$('grid').classList.toggle('on');
+$('bFi').onclick=()=>{S.filter=(S.filter+1)%FILT.length;$('bFi').classList.toggle('on',S.filter>0);look()};
+$('bBt').onclick=e=>{S.beauty=!S.beauty;e.currentTarget.classList.toggle('on',S.beauty);look()};
+$('bTm').onclick=()=>{S.timer=TM[(TM.indexOf(S.timer)+1)%TM.length];$('tmv').textContent=S.timer?S.timer+'s':'Off';$('bTm').classList.toggle('on',!!S.timer)};
+$('fp').onclick=()=>{S.face=S.face==='user'?'environment':'user';start()};
+
+// capture
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function countdown(){
+ if(!S.timer)return;const c=$('cd');c.style.display='flex';
+ for(let i=S.timer;i>0&&!S.cancel;i--){c.textContent=i;await wait(1000)}c.style.display='none';
+}
+async function torch(on){if(caps.torch&&S.face==='environment')try{await track.applyConstraints({advanced:[{torch:on}]})}catch(e){}else if(S.face==='user'&&on){$('fl').style.opacity=1;await wait(250)}}
+async function photo(){
+ await torch(S.flash);const w=v.videoWidth,h=v.videoHeight,c=$c('canvas');
+ const ratio=3/4,vw=Math.min(w,h*ratio*(w>h?1:1)),vh=vw/ratio;let cw=Math.min(w,h*ratio),ch=cw/ratio;if(ch>h){ch=h;cw=ch*ratio}
+ const s=S.cs||1;c.width=cw;c.height=ch;const x=c.getContext('2d');x.filter=S.css;
+ if(S.face==='user'){x.translate(cw,0);x.scale(-1,1)}
+ const sw=cw/s,sh=ch/s;x.drawImage(v,(w-sw)/2,(h-sh)/2,sw,sh,0,0,cw,ch);
+ $('fl').style.opacity=1;setTimeout(()=>$('fl').style.opacity=0,120);await torch(false);
+ c.toBlob(b=>add({type:'image',url:URL.createObjectURL(b)}),'image/jpeg',.93);
+}
+function add(it){S.items.unshift(it);thumb()}
+function thumb(){const i=S.items[0];$('th').style.backgroundImage=i?`url(${i.type==='image'?i.url:i.poster||''})`:'';}
+async function video(){
+ if(S.rec){S.rec.stop();return}
+ const ch=[];await torch(S.flash);const mr=new MediaRecorder(stream,MediaRecorder.isTypeSupported('video/mp4')?{mimeType:'video/mp4'}:{});
+ const t0=Date.now(),iv=setInterval(()=>{const s=Math.floor((Date.now()-t0)/1e3);$('rec').textContent=String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0')},500);
+ mr.ondataavailable=e=>e.data.size&&ch.push(e.data);
+ mr.onstop=()=>{clearInterval(iv);S.rec=null;$('sh').classList.remove('r');$('rec').classList.remove('on');torch(false);
+  const b=new Blob(ch,{type:mr.mimeType||'video/webm'});const c=$c('canvas');c.width=120;c.height=160;c.getContext('2d').drawImage(v,0,0,120,160);
+  add({type:'video',url:URL.createObjectURL(b),poster:c.toDataURL(),ext:(mr.mimeType||'').includes('mp4')?'mp4':'webm'})};
+ mr.start();S.rec=mr;$('sh').classList.add('r');$('rec').classList.add('on');$('rec').textContent='00:00';
+}
+$('sh').onclick=async()=>{
+ if(!stream||S.busy)return;
+ if(S.mode==='VIDEO'){if(S.rec){video();return}S.busy=true;S.cancel=false;await countdown();S.busy=false;video();return}
+ S.busy=true;S.cancel=false;await countdown();await photo();S.busy=false;
+};
+// gallery
+let cur=0;
+function show(){const it=S.items[cur];if(!it)return;$('pop').classList.add('on');const m=$('pm');m.innerHTML='';
+ const el=it.type==='image'?$c('img',{src:it.url}):$c('video',{src:it.url,controls:true,autoplay:true,playsInline:true});m.append(el);
+ $('pd').href=it.url;$('pd').download=`Camera_${Date.now()}.${it.type==='image'?'jpg':it.ext}`}
+$('th').onclick=()=>{cur=0;show()};$('px').onclick=()=>{$('pop').classList.remove('on');$('pm').innerHTML=''};
+$('pt').onclick=()=>{S.items.splice(cur,1);thumb();S.items.length?(cur=0,show()):$('px').click()};
+setMode('PHOTO');start();
+</script></body></html>
